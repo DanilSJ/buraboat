@@ -1,0 +1,45 @@
+---
+- hosts: all
+  become: true
+  vars:
+    nginx_path: /etc/nginx
+    nginx_sites: "{{ nginx_path }}/sites-enabled"
+    my_hostname: buraboat-b.prod-it.com
+    name_project: boraboat
+    work_dir: "/home/panchuk35/{{ name_project }}"
+    access_token: TdzzCFHcQkCK2PsCvLQ2
+    app_port: 8080
+    
+  tasks:
+
+    - name: Register runner
+      ansible.builtin.command: "gitlab-runner register --non-interactive --executor shell --shell bash --description 'production' --tag-list 'production' --url 'https://gitlab.prod-it.com/' --registration-token '{{ access_token }}'"
+
+    ###########################################
+
+    - name: Setup nginx vhost
+      template:
+        src=yoursite.com.conf.tpl
+        dest="{{ nginx_sites }}/{{ my_hostname }}.conf"
+      notify: restart nginx
+        
+    # - name: Setup nginx conf
+    #   template:
+    #     src=nginx.conf.tpl
+    #     dest="{{ nginx_path }}/nginx.conf"
+    #   notify: restart nginx
+
+    - name: Allow all access to tcp port 80
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+    - name: Rm default
+      ansible.builtin.command: rm -f "{{ nginx_sites }}/default"
+  
+  handlers:
+    - name: restart nginx
+      service:
+        name=nginx
+        state=restarted    

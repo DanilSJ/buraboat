@@ -1,0 +1,26 @@
+stages:
+  - dev
+  - production
+
+dev:
+  stage: dev
+  tags:
+    - dev
+  script:
+    - sudo rsync -a $PWD/ /home/panchuk35/boraboat/
+    - cd /home/panchuk35/boraboat
+  only:
+    - main
+
+production:
+  stage: production
+  tags:
+    - production
+  script:
+    - sudo rsync -a $PWD/ /home/panchuk35/boraboat/
+    - cd /home/panchuk35/boraboat
+
+    - sudo docker compose build #--no-cache
+    - sudo docker compose up -d --force-recreate
+  only:
+    - main
